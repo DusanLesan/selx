@@ -1,0 +1,67 @@
+.TH SX4 1 "Jun 2023"
+.SH NAME
+sx4 - Minimal X11 selection tool
+.SH SYNOPSIS
+sx4
+.RB [ \-Bkhv ]
+.RB [ \-b
+.IR width ]
+.RB [ \-c
+.IR color ]
+
+.SH DESCRIPTION
+.B sx4
+is a minimal X11 selection tool.
+After a successful selection the selected area's dimension will be
+printed to standard out (stdout) in the following format:
+.BR "x,y,w,h" .
+
+.SH BINDINGS
+.TP
+.BR "Button1" , " Space"
+Start and end the selection.
+.TP
+.B "Button3"
+If no selection is active, select the window under the cursor.
+.TP
+.BR "Button4" , " Button5" , " f"
+If selection is active, swaps the pointer position.
+This allows for re-adjusting the selection's starting point.
+.TP
+.BR "ESC" , " q"
+Abort the selection.
+.P
+While selection is active pressing any mouse button, other than
+.IR "Button1" , " Button4 " and " Button5"
+will also abort the selection.
+
+.SH OPTIONS
+.TP
+.BR "-B, --keep-border"
+Include the selected window's border in the selection.
+.TP
+.BI "-b, --border-width " "width"
+Width of the selection border, must be within [0, 512].
+.TP
+.BI "-c, --color " "<colorname|#hexcolor>"
+Color of the selection border.
+.TP
+.BR "-k, --no-keyboard"
+Disable keyboard.
+.TP
+.BI "-w, --window " "window-id"
+ID of the window to select.
+.TP
+.BR "-h, --help"
+Show usage and exit.
+.TP
+.BR "-v, --version"
+Show version and exit.
+
+.SH AUTHORS
+NRK <nrk@disroot.org>
+
+.SH BUGS
+.SS "Reporting Bugs"
+For reporting bugs, either open an issue under the Codeberg repo
+<https://codeberg.org/NRK/sx4> or send an email to <nrk@disroot.org>.
