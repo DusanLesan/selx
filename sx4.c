@@ -534,10 +534,7 @@ main(int argc, char *argv[])
 		case MotionNotify: {
 			Point p = (Point){ ev.xmotion.x, ev.xmotion.y };
 			int ndiscarded = 0;
-			for (int n = XEventsQueued(x11.dpy, QueuedAlready);
-			     n > 0 || (n = XEventsQueued(x11.dpy, QueuedAfterFlush)) > 0;
-			     --n)
-			{
+			for (int n = 0; n > 0 || (n = XPending(x11.dpy)) > 0; --n) {
 				XNextEvent(x11.dpy, &ev);
 				if (ev.type == MotionNotify) {
 					p = (Point){ ev.xmotion.x, ev.xmotion.y };
