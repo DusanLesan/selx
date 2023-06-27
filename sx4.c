@@ -179,7 +179,7 @@ static bool
 str_to_hex64(Str s, i64 *out)
 {
 	i64 c, n = 0;
-	if (s.len <= 2 && !str_eq(S("0x"), (Str){ .s = s.s, .len = 2 })) {
+	if (s.len <= 2 || !str_eq(S("0x"), (Str){ .s = s.s, .len = 2 })) {
 		return false;
 	}
 	u8 v[] = { 0xF0, '0', 0x00, 'A' - 10, 'a' - 10 };
