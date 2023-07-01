@@ -79,8 +79,6 @@
 	#define VERSION "BETA"
 #endif
 
-#define CUR_GRAB_MASK  (ButtonPressMask | PointerMotionMask)
-
 // types
 
 typedef uint8_t    u8;
@@ -219,6 +217,7 @@ draw(DrawCtx *ctx, X11 *x11, Point cur, int event)
 		F_ABORT = 0x10, F_SWAP = 0x20
 	};
 	int features = 0;
+	const unsigned grab_mask = ButtonPressMask | PointerMotionMask;
 
 	ASSERT(event >= EV_CLICK && event <= EV_ABORT);
 	switch (ctx->state) {
@@ -284,7 +283,7 @@ draw(DrawCtx *ctx, X11 *x11, Point cur, int event)
 			mask, &wa
 		);
 		XChangeActivePointerGrab(
-			x11->dpy, CUR_GRAB_MASK, x11->cross, CurrentTime
+			x11->dpy, grab_mask, x11->cross, CurrentTime
 		);
 
 		ctx->last  = cur;
@@ -336,7 +335,7 @@ draw(DrawCtx *ctx, X11 *x11, Point cur, int event)
 		}
 
 		Cursor c = x11->dirs[((cur.x > ctx->start.x) << 1) | (cur.y > ctx->start.y)];
-		XChangeActivePointerGrab(x11->dpy, CUR_GRAB_MASK, c, CurrentTime);
+		XChangeActivePointerGrab(x11->dpy, grab_mask, c, CurrentTime);
 
 		XFlush(x11->dpy);
 	}
