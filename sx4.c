@@ -580,7 +580,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (ctx.state != STATE_ABORT) {
+	if (ctx.state != STATE_ABORT && ctx.final.w > 0 && ctx.final.h > 0) {
 		ASSERT(ctx.state == STATE_WINDOW || ctx.state == STATE_RECT);
 		u8 buf[32 * 4], *p = buf;
 		p = int_to_str(p, ctx.final.x); *p++ = ',';
