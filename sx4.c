@@ -79,7 +79,7 @@
 	#define VERSION "BETA"
 #endif
 
-#define CUR_GRAB_MASK  (ButtonPressMask | ButtonReleaseMask | PointerMotionMask)
+#define CUR_GRAB_MASK  (ButtonPressMask | PointerMotionMask)
 
 // types
 
@@ -555,7 +555,7 @@ main(int argc, char *argv[])
 		case DestroyNotify:
 			fatal(S("recieved DestroyNotify\n"));
 			break;
-		case KeyRelease: case ButtonRelease: case MapNotify:
+		case KeyRelease: case MapNotify:
 			NOP(); /* ignored */
 			break;
 		default:
