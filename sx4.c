@@ -223,8 +223,8 @@ draw(DrawCtx *ctx, X11 *x11, Point cur, int event)
 	switch (ctx->state) {
 	case STATE_WAIT:
 		switch (event) {
-		case EV_SWAP: NOP(); break; /* NOLINT */
-		case EV_MOTION: NOP(); break;
+		case EV_SWAP: NOP(); break;
+		case EV_MOTION: ASSERT(!"unreachable"); break;
 		case EV_CLICK: features = F_INIT; break;
 		case EV_ABORT: features = F_ABORT; break;
 		}
