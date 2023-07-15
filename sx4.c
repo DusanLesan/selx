@@ -163,14 +163,15 @@ str_to_i64(Str s, i64 *out)
 {
 	Size i;
 	i64 c, n = 0;
-	for (i = 0; i < s.len && (c = s.s[i] - '0') >= 0 && c <= 9; ++i) {
-		if (((INT64_MAX - c) / 10) < n) {
+	for (i = 0; i < s.len; ++i) {
+		c = s.s[i] - '0';
+		if (c < 0 || c > 9 || ((INT64_MAX - c) / 10) < n) {
 			return false;
 		}
 		n = (n * 10) + c;
 	}
 	*out = n;
-	return i == s.len;
+	return i > 0;
 }
 
 static bool
