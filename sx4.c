@@ -42,8 +42,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -58,9 +58,6 @@
 #define SIZEOF(...)     ((Size)sizeof(__VA_ARGS__))
 #define ARRLEN(X)       (SIZEOF(X) / SIZEOF(0[X]))
 #define S(X)            ((Str){ .s = (u8 *)(X), .len = SIZEOF(X) - 1})
-#define fatal(...)      fatal_core( \
-	(Str []){ __VA_ARGS__ }, ARRLEN(((Str []){ __VA_ARGS__ })) \
-)
 #ifdef __GNUC__
 	/* when debugging, use gcc/clang and compile with
 	 * `-fsanitize=undefined -fsanitize-undefined-trap-on-error`
@@ -71,6 +68,7 @@
 	#define ASSERT(X)  ((void)0)
 #endif
 #ifdef DEBUG
+	#include <stdio.h>
 	#define LOG(...) (fprintf(stderr, __VA_ARGS__), fputc('\n', stderr))
 #else
 	#define LOG(...) ((void)0)
@@ -87,6 +85,7 @@ typedef uint64_t   u64;
 typedef int64_t    i64;
 typedef ptrdiff_t  Size;
 typedef struct { u8 *s; Size len; } Str;
+typedef struct { u8 *buf, *off, *end; int fd, err; } Stream;
 
 typedef struct { int x, y; } Point;
 typedef struct { int x, y, w, h; } Rect;
@@ -120,6 +119,7 @@ typedef struct {
 		STATE_ABORT,
 	} state;
 	Window target;
+	Stream *errout;
 
 	const char *color_name;
 	int border_width;
@@ -128,16 +128,6 @@ typedef struct {
 // functions
 
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations" /* stfu, thanks */
-
-static void
-fatal_core(Str *sv, Size n)
-{
-	for (Size i = 0; i < n; ++i) {
-		ASSERT(sv[i].len > 0);
-		fwrite(sv[i].s, 1, sv[i].len, stderr);
-	}
-	exit(1);
-}
 
 static Str
 str_from_cstr(char *s)
@@ -196,18 +186,50 @@ str_to_hex64(Str s, i64 *out)
 	return true;
 }
 
-static u8 *
-int_to_str(u8 *p, int n)
+static Stream
+stream_create(int fd, u8 *buf, u8 *end)
+{
+	ASSERT(buf != NULL && end != NULL && buf < end);
+	return (Stream){ .fd = fd, .buf = buf, .off = buf, .end = end };
+}
+
+static void
+stream_flush(Stream *out)
+{
+	Size n = out->off - out->buf;
+	out->off = out->buf;
+	out->err = out->err || write(out->fd, out->buf, n) != n;
+}
+
+static void
+stream_append(Stream *out, Str s)
+{
+	for (Size i = 0; !out->err && i < s.len;) {
+		if (out->off == out->end) {
+			stream_flush(out);
+		} else while (out->off < out->end && i < s.len) {
+			*out->off++ = s.s[i++];
+		}
+	}
+}
+
+static void
+stream_int(Stream *out, int n)
 {
 	ASSERT(n >= 0);
-	u8 *q = p + 32, *end = q;
+	u8 buf[32], *end = 1[&buf], *p = end;
 	do {
-		*--q = (n % 10) + '0';
+		*--p = (n % 10) + '0';
 	} while (n /= 10);
-	while (q < end) {
-		*p++ = *q++;
-	}
-	return p;
+	stream_append(out, (Str){ p, end - p });
+}
+
+static void
+fatal(Stream *out, Str errmsg)
+{
+	stream_append(out, errmsg);
+	stream_flush(out);
+	exit(1);
 }
 
 static void
@@ -255,7 +277,7 @@ draw(DrawCtx *ctx, X11 *x11, Point cur, int event)
 
 		LOG("[sx4]: F_INIT");
 		if (XShapeQueryExtension(x11->dpy, (int []){0}, (int []){0}) != True) {
-			fatal(S("XShapeQueryExtension failed\n"));
+			fatal(ctx->errout, S("XShapeQueryExtension failed\n"));
 		}
 
 		XColor clr;
@@ -265,7 +287,7 @@ draw(DrawCtx *ctx, X11 *x11, Point cur, int event)
 			ctx->color_name, (XColor []){0}, &clr
 		);
 		if (!res) {
-			fatal(S("failed to allocate color\n"));
+			fatal(ctx->errout, S("failed to allocate color\n"));
 		}
 
 		wa.override_redirect = True;
@@ -378,10 +400,13 @@ main(int argc, char *argv[])
 		"Upstream: <https://codeberg.org/NRK/sx4>\n"
 	);
 
+	u8 stderr_buf[1<<9];
+	Stream errout[1] = { stream_create(2, stderr_buf, 1[&stderr_buf]) };
 	X11 x11;
 	DrawCtx ctx = {
 		.color_name = "#ff3838",
 		.border_width = 3,
+		.errout = errout,
 	};
 	enum {
 		F_WM_BORDER  =  1 <<  0,
@@ -402,13 +427,13 @@ main(int argc, char *argv[])
 			Str tmp = str_from_cstr(argv[++i]);
 			// 512 pixels ought to be enough for everyone
 			if (!str_to_i64(tmp, &tmpi) || tmpi > 512 || tmpi < 0) {
-				fatal(S("invalid border width\n"));
+				fatal(errout, S("invalid border width\n"));
 			}
 			ctx.border_width = tmpi;
 		} else if (str_eq(a, S("--color")) || str_eq(a, S("-c"))) {
 			ctx.color_name = argv[++i];
 			if (ctx.color_name == NULL) {
-				fatal(S("invalid color name\n"));
+				fatal(errout, S("invalid color name\n"));
 			}
 		} else if (str_eq(a, S("--no-keyboard")) || str_eq(a, S("-k"))) {
 			features &= ~F_KEYBOARD;
@@ -417,31 +442,36 @@ main(int argc, char *argv[])
 			if (!(str_to_i64(tmp, &tmpi) || str_to_hex64(tmp, &tmpi)) ||
 			    tmpi < 0 || (u64)tmpi > (Window)-1)
 			{
-				fatal(S("invalid window ID\n"));
+				fatal(errout, S("invalid window ID\n"));
 			}
 			ctx.state = STATE_WINDOW;
 			ctx.target = tmpi;
 			features = 0x0;
 		} else if (str_eq(a, S("--help")) || str_eq(a, S("-h"))) {
-			fatal(usage);
+			fatal(errout, usage);
 		} else if (str_eq(a, S("--version")) || str_eq(a, S("-v"))) {
-			fatal(version);
+			fatal(errout, version);
 		} else {
-			fatal(S("unknown argument: `"), a, S("`\n"));
+			stream_append(errout, S("unknown argument: `"));
+			stream_append(errout, a);
+			fatal(errout, S("`\n"));
 		}
 	}
 
 	if ((x11.dpy = XOpenDisplay(NULL)) == NULL) {
-		fatal(S("failed to open X display\n"));
+		fatal(errout, S("failed to open X display\n"));
 	}
 
 	if (features & F_COMP_WARN) {
-		u8 buf[64] = "_NET_WM_CM_S";
-		int_to_str(buf + S("_NET_WM_CM_S").len, DefaultScreen(x11.dpy));
+		u8 buf[64];
+		Stream o[1] = { stream_create(-1, buf, 1[&buf]) };
+		stream_append(o, S("_NET_WM_CM_S"));
+		stream_int(o, DefaultScreen(x11.dpy));
+		stream_append(o, S("\0"));
 		Atom cm = XInternAtom(x11.dpy, (char *)buf, False);
 		if (XGetSelectionOwner(x11.dpy, cm) != None) {
-			Str msg = S("compositor detected, things may be broken!!\n");
-			fwrite(msg.s, 1, msg.len, stderr);
+			stream_append(errout, S("compositor detected, things may be broken!!\n"));
+			stream_flush(errout);
 		}
 	}
 
@@ -449,7 +479,7 @@ main(int argc, char *argv[])
 		XWindowAttributes tmp;
 		x11.root.win = DefaultRootWindow(x11.dpy);
 		if (XGetWindowAttributes(x11.dpy, x11.root.win, &tmp) == 0) {
-			fatal(S("XGetWindowAttributes() failed\n"));
+			fatal(errout, S("XGetWindowAttributes() failed\n"));
 		}
 		x11.root.x = tmp.x;
 		x11.root.y = tmp.y;
@@ -480,7 +510,7 @@ main(int argc, char *argv[])
 		} while (res == AlreadyGrabbed);
 		XSelectInput(x11.dpy, x11.root.win, 0x0);
 		if (res != GrabSuccess) {
-			fatal(S("failed to grab keyboard\n"));
+			fatal(errout, S("failed to grab keyboard\n"));
 		}
 	}
 
@@ -492,7 +522,7 @@ main(int argc, char *argv[])
 			GrabModeAsync, x11.root.win, x11.cross, CurrentTime
 		);
 		if (res != GrabSuccess) {
-			fatal(S("failed to grab cursor\n"));
+			fatal(errout, S("failed to grab cursor\n"));
 		}
 	}
 
@@ -557,7 +587,7 @@ main(int argc, char *argv[])
 			draw(&ctx, &x11, ctx.last, EV_MOTION);
 			break;
 		case DestroyNotify:
-			fatal(S("recieved DestroyNotify\n"));
+			fatal(errout, S("recieved DestroyNotify\n"));
 			break;
 		case KeyRelease: case MapNotify:
 			NOP(); /* ignored */
@@ -571,7 +601,7 @@ main(int argc, char *argv[])
 	if (ctx.state == STATE_WINDOW) {
 		XWindowAttributes tmp;
 		if (XGetWindowAttributes(x11.dpy, ctx.target, &tmp) == 0) {
-			fatal(S("XGetWindowAttributes() failed\n"));
+			fatal(errout, S("XGetWindowAttributes() failed\n"));
 		}
 		int b = tmp.border_width;
 		ctx.final = (Rect){ tmp.x, tmp.y, tmp.width, tmp.height };
@@ -586,16 +616,15 @@ main(int argc, char *argv[])
 
 	if (ctx.state != STATE_ABORT && ctx.final.w > 0 && ctx.final.h > 0) {
 		ASSERT(ctx.state == STATE_WINDOW || ctx.state == STATE_RECT);
-		u8 buf[32 * 4], *p = buf;
-		p = int_to_str(p, ctx.final.x); *p++ = ',';
-		p = int_to_str(p, ctx.final.y); *p++ = ',';
-		p = int_to_str(p, ctx.final.w); *p++ = ',';
-		p = int_to_str(p, ctx.final.h); *p++ = '\n';
-		ASSERT(p < (buf + SIZEOF(buf)));
-		fwrite(buf, 1, p - buf, stdout);
-		fflush(stdout);
-		if (ferror(stdout)) {
-			fatal(S("failed to write to stdout\n"));
+		u8 buf[1<<9];
+		Stream out[1] = { stream_create(1, buf, 1[&buf]) };
+		stream_int(out, ctx.final.x); stream_append(out, S(","));
+		stream_int(out, ctx.final.y); stream_append(out, S(","));
+		stream_int(out, ctx.final.w); stream_append(out, S(","));
+		stream_int(out, ctx.final.h); stream_append(out, S("\n"));
+		stream_flush(out);
+		if (out->err) {
+			fatal(errout, S("failed to write to stdout\n"));
 		}
 	}
 
