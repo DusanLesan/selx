@@ -68,9 +68,9 @@ $ cc -o sx4 sx4.c -s -l X11 -l Xext
 * Recommended optimized build:
 
 ```console
-$ gcc -o sx4 sx4.c -Ofast -march=native -fwhole-program -fno-plt \
-    -fno-semantic-interposition -fgraphite-identity -floop-nest-optimize \
-    -fipa-pta -fno-asynchronous-unwind-tables -fno-ident -fno-pie \
+$ gcc -o sx4 sx4.c -Ofast -march=native \
+    -fgraphite-identity -floop-nest-optimize -fipa-pta \
+    -fno-asynchronous-unwind-tables -fno-ident -fno-pie -fno-plt \
     -s -no-pie -l X11 -l Xext
 ```
 
