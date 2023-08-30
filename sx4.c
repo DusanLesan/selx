@@ -58,6 +58,7 @@
 #define SIZEOF(...)     ((Size)sizeof(__VA_ARGS__))
 #define ARRLEN(X)       (SIZEOF(X) / SIZEOF(0[X]))
 #define S(X)            ((Str){ .s = (u8 *)(X), .len = SIZEOF(X) - 1})
+#define SCH(X)          ((Str){ .s = (u8 [1]){ (X) }, 1 })
 #ifdef __GNUC__
 	/* when debugging, use gcc/clang and compile with
 	 * `-fsanitize=undefined -fsanitize-undefined-trap-on-error`
@@ -392,7 +393,7 @@ draw(DrawCtx *ctx, X11 *x11, Point cur, int event)
 extern int
 main(int argc, char *argv[])
 {
-	Str usage = S("Usage: sx4: [-Bkhv] [-b width] [-c color]\n");
+	Str usage = S("Usage: sx4: [-Bkhv] [-b width] [-c color] [-f format]\n");
 	Str version = S(
 		"sx4 " VERSION "\n"
 		"Copyright (C) 2023 NRK.\n"
@@ -417,6 +418,7 @@ main(int argc, char *argv[])
 		F_COMP_WARN  =  1 <<  5,
 	};
 	u32 features = F_KEYBOARD | F_MAUS | F_CURSOR | F_ROOT | F_COMP_WARN;
+	Str out_fmt = S("%x,%y,%w,%h%n");
 
 	for (int i = 1; i < argc; ++i) {
 		i64 tmpi;
@@ -447,6 +449,11 @@ main(int argc, char *argv[])
 			ctx.state = STATE_WINDOW;
 			ctx.target = tmpi;
 			features = 0x0;
+		} else if (str_eq(a, S("--format")) || str_eq(a, S("-f"))) {
+			out_fmt = str_from_cstr(argv[++i]);
+			if (out_fmt.s == NULL) {
+				fatal(errout, S("--format requires an argument\n"));
+			}
 		} else if (str_eq(a, S("--help")) || str_eq(a, S("-h"))) {
 			fatal(errout, usage);
 		} else if (str_eq(a, S("--version")) || str_eq(a, S("-v"))) {
@@ -618,10 +625,33 @@ main(int argc, char *argv[])
 		ASSERT(ctx.state == STATE_WINDOW || ctx.state == STATE_RECT);
 		u8 buf[1<<9];
 		Stream out[1] = { stream_create(1, buf, 1[&buf]) };
-		stream_int(out, ctx.final.x); stream_append(out, S(","));
-		stream_int(out, ctx.final.y); stream_append(out, S(","));
-		stream_int(out, ctx.final.w); stream_append(out, S(","));
-		stream_int(out, ctx.final.h); stream_append(out, S("\n"));
+		for (Size i = 0; i < out_fmt.len; NOP()) {
+			u8 ch = out_fmt.s[i++];
+			switch (ch) {
+			case '%': {
+				Rect *r = &ctx.final;
+				u8 ch2 = i < out_fmt.len ? out_fmt.s[i++] : '\0';
+				switch (ch2) {
+				case 'x': stream_int(out, r->x); break;
+				case 'y': stream_int(out, r->y); break;
+				case 'w': stream_int(out, r->w); break;
+				case 'h': stream_int(out, r->h); break;
+				case 'W': stream_int(out, r->x + r->w); break;
+				case 'H': stream_int(out, r->y + r->h); break;
+				case 'n': stream_append(out, S("\n")); break;
+				case '%': stream_append(out, S("%")); break;
+				default:
+					stream_append(errout, S("unsupported specifier: %"));
+					stream_append(errout, SCH(ch2));
+					fatal(errout, S("\n"));
+					break;
+				}
+			} break;
+			default:
+				stream_append(out, SCH(ch));
+				break;
+			}
+		}
 		stream_flush(out);
 		if (out->err) {
 			fatal(errout, S("failed to write to stdout\n"));
@@ -644,4 +674,3 @@ main(int argc, char *argv[])
 // TODO: fix glitches under certain compositors/WMs
 // TODO?: --highlight
 // TODO?: --no-maus
-// TODO?: --format

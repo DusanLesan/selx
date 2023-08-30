@@ -8,6 +8,8 @@ sx4
 .IR width ]
 .RB [ \-c
 .IR color ]
+.RB [ \-f
+.IR format\-string ]
 
 .SH DESCRIPTION
 .B sx4
@@ -26,6 +28,10 @@ Width of the selection border, must be within [0, 512].
 .TP
 .BI "-c, --color " "<colorname|#hexcolor>"
 Color of the selection border.
+.TP
+.BI "-f, --format " "format\-string"
+Change the default output format.
+See FORMAT section for more details.
 .TP
 .BR "-k, --no-keyboard"
 Disable keyboard.
@@ -64,6 +70,37 @@ Moves the cursor by 16 pixels.
 modifier can be used to move by 1 pixel.
 .B Shift
 modifier can be used to move in bigger increments of 128 pixels.
+
+.SH FORMAT
+The output format can be customized via the \-f flag.
+The format\-string accepts specifiers that are expanded before outputting.
+The following specifiers are supported:
+.TP
+.B "%x"
+x co\-ordinate.
+.TP
+.B "%y"
+y co\-ordinate.
+.TP
+.B "%w"
+width.
+.TP
+.B "%h"
+height.
+.TP
+.B "%W"
+absolute co\-ordinate of the width.
+.TP
+.B "%H"
+absolute co\-ordinate of the height.
+.TP
+.B "%n"
+a new-line.
+.TP
+.B "%%"
+a literal percent\-sign.
+.P
+For example "%x,%y,%w,%h%n" would be equivalent to the default output format.
 
 .SH AUTHORS
 NRK <nrk@disroot.org>
