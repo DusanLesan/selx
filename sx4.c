@@ -475,7 +475,8 @@ main(int argc, char *argv[])
 				x11.dpy, x11.root.win, 0,
 				GrabModeAsync, GrabModeAsync, CurrentTime
 			);
-			XNextEvent(x11.dpy, (XEvent []){0});
+			XEvent junk;
+			XNextEvent(x11.dpy, &junk);
 		} while (res == AlreadyGrabbed);
 		XSelectInput(x11.dpy, x11.root.win, 0x0);
 		if (res != GrabSuccess) {
