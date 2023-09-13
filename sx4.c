@@ -504,7 +504,10 @@ main(int argc, char *argv[])
 		queued = false;
 
 		switch (ev.type) {
-		case KeyPress: // TODO?: more rich keyboard controls
+		case KeyPress: {
+			int x = ev.xkey.x_root, y = ev.xkey.y_root;
+			int delta = (ev.xkey.state & ControlMask) ? 1 :
+			            ((ev.xkey.state & ShiftMask) ? 128 : 16);
 			switch (XKeycodeToKeysym(x11.dpy, ev.xkey.keycode, 0)) {
 			case XK_space:
 				draw(&ctx, &x11, (Point){ ev.xkey.x, ev.xkey.y }, EV_CLICK);
@@ -516,8 +519,15 @@ main(int argc, char *argv[])
 			case XK_Escape:
 				draw(&ctx, &x11, (Point){ ev.xkey.x, ev.xkey.y }, EV_ABORT);
 				break;
+			case XK_h: case XK_Left:  x -= delta; break;
+			case XK_l: case XK_Right: x += delta; break;
+			case XK_k: case XK_Up:    y -= delta; break;
+			case XK_j: case XK_Down:  y += delta; break;
 			}
-			break;
+			if (x != ev.xkey.x_root || y != ev.xkey.y_root) {
+				XWarpPointer(x11.dpy, None, x11.root.win, 0, 0, 0, 0, x, y);
+			}
+		} break;
 		case ButtonPress: {
 			int btn = ev.xbutton.button;
 			Point p = { ev.xbutton.x, ev.xbutton.y };
