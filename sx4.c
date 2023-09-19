@@ -505,27 +505,20 @@ main(int argc, char *argv[])
 
 		switch (ev.type) {
 		case KeyPress: {
-			int x = ev.xkey.x_root, y = ev.xkey.y_root;
+			Point p = { ev.xbutton.x, ev.xbutton.y };
 			int delta = (ev.xkey.state & ControlMask) ? 1 :
 			            ((ev.xkey.state & ShiftMask) ? 128 : 16);
 			switch (XKeycodeToKeysym(x11.dpy, ev.xkey.keycode, 0)) {
-			case XK_space:
-				draw(&ctx, &x11, (Point){ ev.xkey.x, ev.xkey.y }, EV_CLICK);
-				break;
-			case XK_f:
-				draw(&ctx, &x11, (Point){ ev.xkey.x, ev.xkey.y }, EV_SWAP);
-				break;
-			case XK_q:
-			case XK_Escape:
-				draw(&ctx, &x11, (Point){ ev.xkey.x, ev.xkey.y }, EV_ABORT);
-				break;
-			case XK_h: case XK_Left:  x -= delta; break;
-			case XK_l: case XK_Right: x += delta; break;
-			case XK_k: case XK_Up:    y -= delta; break;
-			case XK_j: case XK_Down:  y += delta; break;
+			case XK_space: draw(&ctx, &x11, p, EV_CLICK); break;
+			case XK_f: draw(&ctx, &x11, p, EV_SWAP); break;
+			case XK_q: case XK_Escape: draw(&ctx, &x11, p, EV_ABORT); break;
+			case XK_h: case XK_Left:  p.x -= delta; break;
+			case XK_l: case XK_Right: p.x += delta; break;
+			case XK_k: case XK_Up:    p.y -= delta; break;
+			case XK_j: case XK_Down:  p.y += delta; break;
 			}
-			if (x != ev.xkey.x_root || y != ev.xkey.y_root) {
-				XWarpPointer(x11.dpy, None, x11.root.win, 0, 0, 0, 0, x, y);
+			if (p.x != ev.xkey.x_root || p.y != ev.xkey.y_root) {
+				XWarpPointer(x11.dpy, None, x11.root.win, 0, 0, 0, 0, p.x, p.y);
 			}
 		} break;
 		case ButtonPress: {
