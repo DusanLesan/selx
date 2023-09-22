@@ -16,6 +16,29 @@ After a successful selection the selected area's dimension will be
 printed to standard out (stdout) in the following format:
 .BR "x,y,w,h" .
 
+.SH OPTIONS
+.TP
+.BR "-B, --keep-border"
+Include the selected window's border in the selection.
+.TP
+.BI "-b, --border-width " "width"
+Width of the selection border, must be within [0, 512].
+.TP
+.BI "-c, --color " "<colorname|#hexcolor>"
+Color of the selection border.
+.TP
+.BR "-k, --no-keyboard"
+Disable keyboard.
+.TP
+.BI "-w, --window " "window-id"
+ID of the window to select.
+.TP
+.BR "-h, --help"
+Show usage and exit.
+.TP
+.BR "-v, --version"
+Show version and exit.
+
 .SH BINDINGS
 .TP
 .BR "Button1" , " Space"
@@ -41,29 +64,6 @@ Moves the cursor by 16 pixels.
 modifier can be used to move by 1 pixel.
 .B Shift
 modifier can be used to move in bigger increments of 128 pixels.
-
-.SH OPTIONS
-.TP
-.BR "-B, --keep-border"
-Include the selected window's border in the selection.
-.TP
-.BI "-b, --border-width " "width"
-Width of the selection border, must be within [0, 512].
-.TP
-.BI "-c, --color " "<colorname|#hexcolor>"
-Color of the selection border.
-.TP
-.BR "-k, --no-keyboard"
-Disable keyboard.
-.TP
-.BI "-w, --window " "window-id"
-ID of the window to select.
-.TP
-.BR "-h, --help"
-Show usage and exit.
-.TP
-.BR "-v, --version"
-Show version and exit.
 
 .SH AUTHORS
 NRK <nrk@disroot.org>
