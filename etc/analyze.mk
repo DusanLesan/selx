@@ -20,6 +20,7 @@ analyze-clang-weverything:
 		-Wno-disabled-macro-expansion -Wno-declaration-after-statement \
 		-Wno-shorten-64-to-32 -Wno-implicit-int-conversion \
 		-Wno-sign-conversion -Wno-string-conversion -Wno-switch-enum \
-		-Wno-tautological-type-limit-compare -Wno-missing-noreturn
+		-Wno-tautological-type-limit-compare -Wno-missing-noreturn \
+		-Wno-unsafe-buffer-usage
 
 .PHONY: analyze
