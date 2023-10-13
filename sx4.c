@@ -393,7 +393,7 @@ draw(DrawCtx *ctx, X11 *x11, Point cur, int event)
 extern int
 main(int argc, char *argv[])
 {
-	Str usage = S("Usage: sx4: [-Bkhv] [-b width] [-c color] [-f format]\n");
+	Str usage = S("Usage: sx4 [-Bkhv] [-b width] [-c color] [-f format] [-w WID]\n");
 	Str version = S(
 		"sx4 " VERSION "\n"
 		"Copyright (C) 2023 NRK.\n"
