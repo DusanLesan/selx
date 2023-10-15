@@ -1,6 +1,6 @@
-# sx4
+# selx
 
-`sx4` is a simple X11 rectangle selection tool, meant to be a smaller
+`selx` is a simple X11 rectangle selection tool, meant to be a smaller
 alternative to [`slop`][slop].
 
 Some key features:
@@ -24,7 +24,7 @@ View the manpage for more details.
 * Take a screenshot of the selected area with [`sxot`][sxot]:
 
 ```console
-$ sxot -g "$(sx4)" > out.ppm
+$ sxot -g "$(selx)" > out.ppm
 ```
 
 * Recording the selected area with [`ffmpeg`][ffmpeg]:
@@ -33,7 +33,7 @@ $ sxot -g "$(sx4)" > out.ppm
 #!/bin/sh
 
 IFS=, read x y w h << EOF
-$(sx4)
+$(selx)
 EOF
 [ -z "$h" ] && exit 1
 
@@ -62,13 +62,13 @@ ffmpeg -f x11grab -s "${w}x${h}" -i ":0.0+$x,$y" -c:v libx264 -an \
 * Simple build:
 
 ```console
-$ cc -o sx4 sx4.c -s -l X11 -l Xext
+$ cc -o selx selx.c -s -l X11 -l Xext
 ```
 
 * Recommended optimized build:
 
 ```console
-$ gcc -o sx4 sx4.c -Ofast -march=native \
+$ gcc -o selx selx.c -Ofast -march=native \
     -fgraphite-identity -floop-nest-optimize -fipa-pta \
     -fno-asynchronous-unwind-tables -fno-ident -fno-pie -fno-plt \
     -s -no-pie -l X11 -l Xext
@@ -77,7 +77,7 @@ $ gcc -o sx4 sx4.c -Ofast -march=native \
 * Recommended debug build:
 
 ```console
-$ gcc -o sx4 sx4.c -std=c99 -Wall -Wextra -Wpedantic -Wshadow \
+$ gcc -o selx selx.c -std=c99 -Wall -Wextra -Wpedantic -Wshadow \
     -g3 -D DEBUG -O0 -fsanitize=address,undefined -l X11 -l Xext
 ```
 
@@ -92,15 +92,15 @@ $ make -f etc/analyze.mk
 Just copy the executable and the man-page to the appropriate location:
 
 ```console
-$ sudo cp sx4 /usr/local/bin
-$ sudo cp sx4.1 /usr/local/share/man/man1
+$ sudo cp selx /usr/local/bin
+$ sudo cp selx.1 /usr/local/share/man/man1
 ```
 
 Or using the `install` utility:
 
 ```console
-$ sudo install -Dm755 sx4 /usr/local/bin/sx4
-$ sudo install -Dm644 sx4.1 /usr/local/share/man/man1/sx4.1
+$ sudo install -Dm755 selx /usr/local/bin/selx
+$ sudo install -Dm644 selx.1 /usr/local/share/man/man1/selx.1
 ```
 
 ## Limitation

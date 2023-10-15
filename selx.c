@@ -3,20 +3,20 @@
  *
  * Copyright (C) 2023 NRK.
  *
- * This file is part of sx4.
+ * This file is part of selx.
  *
- * sx4 is free software: you can redistribute it and/or modify it under the
+ * selx is free software: you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later
  * version.
  *
- * sx4 is distributed in the hope that it will be useful, but WITHOUT ANY
+ * selx is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
  *
  * You should have received a copy of the GNU General Public License
- * along with sx4. If not, see <https://www.gnu.org/licenses/>.
+ * along with selx. If not, see <https://www.gnu.org/licenses/>.
  *
  * ----------------------------------------------------------------------------
  *
@@ -276,7 +276,7 @@ draw(DrawCtx *ctx, X11 *x11, Point cur, int event)
 		unsigned long mask = 0;
 		XSetWindowAttributes wa;
 
-		LOG("[sx4]: F_INIT");
+		LOG("[selx]: F_INIT");
 		if (XShapeQueryExtension(x11->dpy, (int []){0}, (int []){0}) != True) {
 			fatal(ctx->errout, S("XShapeQueryExtension failed\n"));
 		}
@@ -353,7 +353,7 @@ draw(DrawCtx *ctx, X11 *x11, Point cur, int event)
 		);
 
 		if (ctx->state == STATE_INIT) {
-			LOG("[sx4]: mapping");
+			LOG("[selx]: mapping");
 			XMapWindow(x11->dpy, x11->win);
 			ctx->state = STATE_DRAW;
 		}
@@ -365,7 +365,7 @@ draw(DrawCtx *ctx, X11 *x11, Point cur, int event)
 	}
 
 	if (features & F_CLEAN) {
-		LOG("[sx4]: F_CLEAN");
+		LOG("[selx]: F_CLEAN");
 		ASSERT(ctx->state >= STATE_INIT && ctx->state < STATE_EXIT_LOOP);
 		XDestroyWindow(x11->dpy, x11->win);
 		bool destroyed = false, unmapped = (ctx->state == STATE_INIT);
@@ -393,12 +393,12 @@ draw(DrawCtx *ctx, X11 *x11, Point cur, int event)
 extern int
 main(int argc, char *argv[])
 {
-	Str usage = S("Usage: sx4 [-Bkhv] [-b width] [-c color] [-f format] [-w WID]\n");
+	Str usage = S("Usage: selx [-Bkhv] [-b width] [-c color] [-f format] [-w WID]\n");
 	Str version = S(
-		"sx4 " VERSION "\n"
+		"selx " VERSION "\n"
 		"Copyright (C) 2023 NRK.\n"
 		"License: GPLv3+ <https://gnu.org/licenses/gpl.html>\n"
-		"Upstream: <https://codeberg.org/NRK/sx4>\n"
+		"Upstream: <https://codeberg.org/NRK/selx>\n"
 	);
 
 	u8 stderr_buf[1<<9];
@@ -582,15 +582,15 @@ main(int argc, char *argv[])
 					++ndiscarded;
 				} else {
 					queued = true;
-					LOG("[sx4]: queuing event");
+					LOG("[selx]: queuing event");
 					break;
 				}
 			}
-			if (ndiscarded) LOG("[sx4]: discarded %d stale MotionNotify event", ndiscarded);
+			if (ndiscarded) LOG("[selx]: discarded %d stale MotionNotify event", ndiscarded);
 			draw(&ctx, &x11, p, EV_MOTION);
 		} break;
 		case Expose:
-			LOG("[sx4]: Expose...");
+			LOG("[selx]: Expose...");
 			draw(&ctx, &x11, ctx.last, EV_MOTION);
 			break;
 		case DestroyNotify:
@@ -600,7 +600,7 @@ main(int argc, char *argv[])
 			NOP(); /* ignored */
 			break;
 		default:
-			LOG("[sx4]: Event(%d)...", ev.type);
+			LOG("[selx]: Event(%d)...", ev.type);
 			break;
 		}
 	}
