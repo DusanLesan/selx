@@ -19,6 +19,9 @@ View the manpage for more details.
 
 ![preview](https://images2.imgbox.com/0d/a4/kPvhiJFL_o.gif)
 
+*(Note: the preview image is using the old project name `sx4` before it was
+  renamed to `selx`)*
+
 ## Example Usage
 
 * Take a screenshot of the selected area with [`sxot`][sxot]:
