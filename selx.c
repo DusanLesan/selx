@@ -58,7 +58,7 @@
 #define SIZEOF(...)     ((Size)sizeof(__VA_ARGS__))
 #define ARRLEN(X)       (SIZEOF(X) / SIZEOF(0[X]))
 #define S(X)            ((Str){ .s = (u8 *)(X), .len = SIZEOF(X) - 1})
-#define SCH(X)          ((Str){ .s = (u8 [1]){ (X) }, 1 })
+#define SCH(X)          ((Str){ .s = (u8 [1]){ (X) }, .len = 1 })
 #ifdef __GNUC__
 	/* when debugging, use gcc/clang and compile with
 	 * `-fsanitize=undefined -fsanitize-undefined-trap-on-error`
@@ -573,7 +573,7 @@ main(int argc, char *argv[])
 			}
 		} break;
 		case MotionNotify: {
-			Point p = (Point){ ev.xmotion.x, ev.xmotion.y };
+			Point p = { ev.xmotion.x, ev.xmotion.y };
 			int ndiscarded = 0;
 			for (int n = 0; n > 0 || (n = XPending(x11.dpy)) > 0; --n) {
 				XNextEvent(x11.dpy, &ev);
