@@ -3,15 +3,15 @@
 selx - Minimal X11 selection tool
 .SH SYNOPSIS
 selx
-.RB [ \-Bkhv ]
-.RB [ \-b
+.RB [ -Bkhv ]
+.RB [ -b
 .IR width ]
-.RB [ \-c
+.RB [ -c
 .IR color ]
-.RB [ \-f
-.IR format\-string ]
-.RB [ \-w
-.IR window\-id ]
+.RB [ -f
+.IR format-string ]
+.RB [ -w
+.IR window-id ]
 
 .SH DESCRIPTION
 .B selx
@@ -31,7 +31,7 @@ Width of the selection border, must be within [0, 512].
 .BI "-c, --color " "<colorname|#hexcolor>"
 Color of the selection border.
 .TP
-.BI "-f, --format " "format\-string"
+.BI "-f, --format " "format-string"
 Change the default output format.
 See FORMAT section for more details.
 .TP
@@ -74,15 +74,15 @@ modifier can be used to move by 1 pixel.
 modifier can be used to move in bigger increments of 128 pixels.
 
 .SH FORMAT
-The output format can be customized via the \-f flag.
-The format\-string accepts specifiers that are expanded before outputting.
+The output format can be customized via the -f flag.
+The format-string accepts specifiers that are expanded before outputting.
 The following specifiers are supported:
 .TP
 .B "%x"
-x co\-ordinate.
+x co-ordinate.
 .TP
 .B "%y"
-y co\-ordinate.
+y co-ordinate.
 .TP
 .B "%w"
 width.
@@ -91,16 +91,16 @@ width.
 height.
 .TP
 .B "%W"
-absolute co\-ordinate of the width.
+absolute co-ordinate of the width.
 .TP
 .B "%H"
-absolute co\-ordinate of the height.
+absolute co-ordinate of the height.
 .TP
 .B "%n"
 a new-line.
 .TP
 .B "%%"
-a literal percent\-sign.
+a literal percent-sign.
 .P
 For example "%x,%y,%w,%h%n" would be equivalent to the default output format.
 
