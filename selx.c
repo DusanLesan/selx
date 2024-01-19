@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------------------------------------
  *
- * Copyright (C) 2023 NRK.
+ * Copyright (C) 2023-2024 NRK.
  *
  * This file is part of selx.
  *
@@ -55,6 +55,8 @@
 
 #define NOP()           ((void)0)
 #define DIFF(A, B)      ((A) > (B) ? (A) - (B) : (B) - (A))
+#define MIN(A, B)       ((A) < (B) ? (A) : (B))
+#define CLAMP(X, L, H)  ((X) < (L) ? (L) : ((X) > (H) ? (H) : (X)))  // [lo, hi]
 #define SIZEOF(...)     ((Size)sizeof(__VA_ARGS__))
 #define ARRLEN(X)       (SIZEOF(X) / SIZEOF(0[X]))
 #define S(X)            ((Str){ .s = (u8 *)(X), .len = SIZEOF(X) - 1})
@@ -448,7 +450,7 @@ main(int argc, char *argv[])
 			}
 			ctx.state = STATE_WINDOW;
 			ctx.target = tmpi;
-			features = 0x0;
+			features = F_ROOT;
 		} else if (str_eq(a, S("--format")) || str_eq(a, S("-f"))) {
 			out_fmt = str_from_cstr(argv[++i]);
 			if (out_fmt.s == NULL) {
@@ -605,6 +607,8 @@ main(int argc, char *argv[])
 		}
 	}
 
+	// TODO: this executes even when the target window is not visible.
+	// should we skip in those cases instead?
 	if (ctx.state == STATE_WINDOW) {
 		XWindowAttributes tmp;
 		if (XGetWindowAttributes(x11.dpy, ctx.target, &tmp) == 0) {
@@ -619,6 +623,11 @@ main(int argc, char *argv[])
 			ctx.final.x += b;
 			ctx.final.y += b;
 		}
+		ASSERT(features & F_ROOT);
+		ctx.final.x = CLAMP(ctx.final.x, 0, x11.root.w);
+		ctx.final.y = CLAMP(ctx.final.y, 0, x11.root.h);
+		ctx.final.w = MIN(ctx.final.w, x11.root.w - ctx.final.x);
+		ctx.final.h = MIN(ctx.final.h, x11.root.h - ctx.final.y);
 	}
 
 	if (ctx.state != STATE_ABORT && ctx.final.w > 0 && ctx.final.h > 0) {
