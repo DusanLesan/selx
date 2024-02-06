@@ -280,7 +280,7 @@ draw(DrawCtx *ctx, X11 *x11, Point cur, int event)
 
 		LOG("[selx]: F_INIT");
 		if (XShapeQueryExtension(x11->dpy, (int []){0}, (int []){0}) != True) {
-			fatal(ctx->errout, S("XShapeQueryExtension failed\n"));
+			fatal(ctx->errout, S("XShapeQueryExtension() failed\n"));
 		}
 
 		XColor clr;
@@ -290,7 +290,9 @@ draw(DrawCtx *ctx, X11 *x11, Point cur, int event)
 			ctx->color_name, (XColor []){0}, &clr
 		);
 		if (!res) {
-			fatal(ctx->errout, S("failed to allocate color\n"));
+			stream_append(ctx->errout, S("failed to allocate color: `"));
+			stream_append(ctx->errout, str_from_cstr(ctx->color_name));
+			fatal(ctx->errout, S("`\n"));
 		}
 
 		wa.override_redirect = True;
@@ -437,7 +439,7 @@ main(int argc, char *argv[])
 		} else if (str_eq(a, S("--color")) || str_eq(a, S("-c"))) {
 			ctx.color_name = argv[++i];
 			if (ctx.color_name == NULL) {
-				fatal(errout, S("invalid color name\n"));
+				fatal(errout, S("--color requires an argument\n"));
 			}
 		} else if (str_eq(a, S("--no-keyboard")) || str_eq(a, S("-k"))) {
 			features &= ~F_KEYBOARD;
@@ -650,9 +652,9 @@ main(int argc, char *argv[])
 				case 'n': stream_append(out, S("\n")); break;
 				case '%': stream_append(out, S("%")); break;
 				default:
-					stream_append(errout, S("unsupported specifier: %"));
+					stream_append(errout, S("unsupported specifier: `%"));
 					stream_append(errout, SCH(ch2));
-					fatal(errout, S("\n"));
+					fatal(errout, S("`\n"));
 					break;
 				}
 			} break;
