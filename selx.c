@@ -291,7 +291,7 @@ draw(DrawCtx *ctx, X11 *x11, Point cur, int event)
 		);
 		if (!res) {
 			stream_append(ctx->errout, S("failed to allocate color: `"));
-			stream_append(ctx->errout, str_from_cstr(ctx->color_name));
+			stream_append(ctx->errout, str_from_cstr((char *)ctx->color_name));
 			fatal(ctx->errout, S("`\n"));
 		}
 

@@ -21,6 +21,6 @@ analyze-clang-weverything:
 		-Wno-shorten-64-to-32 -Wno-implicit-int-conversion \
 		-Wno-sign-conversion -Wno-string-conversion -Wno-switch-enum \
 		-Wno-tautological-type-limit-compare -Wno-missing-noreturn \
-		-Wno-unsafe-buffer-usage
+		-Wno-unsafe-buffer-usage -Wno-cast-qual
 
 .PHONY: analyze
