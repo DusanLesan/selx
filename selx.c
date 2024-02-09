@@ -400,7 +400,7 @@ main(int argc, char *argv[])
 	Str usage = S("Usage: selx [-Bkhv] [-b width] [-c color] [-f format] [-w WID]\n");
 	Str version = S(
 		"selx " VERSION "\n"
-		"Copyright (C) 2023 NRK.\n"
+		"Copyright (C) 2023-2024 NRK.\n"
 		"License: GPLv3+ <https://gnu.org/licenses/gpl.html>\n"
 		"Upstream: <https://codeberg.org/NRK/selx>\n"
 	);
