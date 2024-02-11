@@ -10,6 +10,8 @@ selx
 .IR color ]
 .RB [ -f
 .IR format-string ]
+.RB [ -m
+.IR monitor-index ]
 .RB [ -w
 .IR window-id ]
 
@@ -38,6 +40,9 @@ See FORMAT section for more details.
 .BR "-k, --no-keyboard"
 Disable keyboard.
 .TP
+.BI "-m, --monitor " "monitor-index"
+Index of the monitor to select.
+.TP
 .BI "-w, --window " "window-id"
 ID of the window to select.
 .TP
@@ -54,6 +59,9 @@ Start and end the selection.
 .TP
 .B "Button3"
 If no selection is active, select the window under the cursor.
+.TP
+.B "Control+Button3"
+If no selection is active, select the monitor under the cursor.
 .TP
 .BR "Button4" , " Button5" , " f"
 If selection is active, swaps the pointer position.

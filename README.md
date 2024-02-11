@@ -59,13 +59,14 @@ ffmpeg -f x11grab -s "${w}x${h}" -i ":0.0+$x,$y" -c:v libx264 -an \
   * X11 server
   * Xlib
   * Xext
+  * libXrandr
 
 ## Building
 
 * Simple build:
 
 ```console
-$ cc -o selx selx.c -s -l X11 -l Xext
+$ cc -o selx selx.c -s -l X11 -l Xext -l Xrandr
 ```
 
 * Recommended optimized build:
@@ -74,14 +75,14 @@ $ cc -o selx selx.c -s -l X11 -l Xext
 $ gcc -o selx selx.c -Ofast -march=native \
     -fgraphite-identity -floop-nest-optimize -fipa-pta \
     -fno-asynchronous-unwind-tables -fno-ident -fno-pie -fno-plt \
-    -s -no-pie -l X11 -l Xext
+    -s -no-pie -l X11 -l Xext -l Xrandr
 ```
 
 * Recommended debug build:
 
 ```console
 $ gcc -o selx selx.c -std=c99 -Wall -Wextra -Wpedantic -Wshadow \
-    -g3 -D DEBUG -O0 -fsanitize=address,undefined -l X11 -l Xext
+    -g3 -D DEBUG -O0 -fsanitize=address,undefined -l X11 -l Xext -l Xrandr
 ```
 
 * Optionally run some static analysis:

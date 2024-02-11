@@ -50,6 +50,7 @@
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
 #include <X11/extensions/shape.h>
+#include <X11/extensions/Xrandr.h>
 
 // macros
 
@@ -107,6 +108,7 @@ typedef struct {
 	Window win;
 } X11;
 
+enum { MONITOR_UNDER_CURSOR = -64 };
 enum { EV_CLICK, EV_MOTION, EV_SWAP, EV_ABORT };
 typedef struct {
 	Point start, last;
@@ -119,9 +121,13 @@ typedef struct {
 		STATE_EXIT_LOOP,
 		STATE_RECT,
 		STATE_WINDOW,
+		STATE_MONITOR,
 		STATE_ABORT,
 	} state;
-	Window target;
+	union {
+		Window window;
+		int    monitor;
+	} target;
 	Stream *errout;
 
 	const char *color_name;
@@ -397,7 +403,7 @@ draw(DrawCtx *ctx, X11 *x11, Point cur, int event)
 extern int
 main(int argc, char *argv[])
 {
-	Str usage = S("Usage: selx [-Bkhv] [-b width] [-c color] [-f format] [-w WID]\n");
+	Str usage = S("Usage: selx [-Bkhv] [-b width] [-c color] [-f format] [-m monitor] [-w WID]\n");
 	Str version = S(
 		"selx " VERSION "\n"
 		"Copyright (C) 2023-2024 NRK.\n"
@@ -451,7 +457,15 @@ main(int argc, char *argv[])
 				fatal(errout, S("invalid window ID\n"));
 			}
 			ctx.state = STATE_WINDOW;
-			ctx.target = tmpi;
+			ctx.target.window = tmpi;
+			features = F_ROOT;
+		} else if (str_eq(a, S("--monitor")) || str_eq(a, S("-m"))) {
+			i64 n;
+			if (!str_to_i64(str_from_cstr(argv[++i]), &n)) {
+				fatal(errout, S("invalid monitor number\n"));
+			}
+			ctx.state = STATE_MONITOR;
+			ctx.target.monitor = n;
 			features = F_ROOT;
 		} else if (str_eq(a, S("--format")) || str_eq(a, S("-f"))) {
 			out_fmt = str_from_cstr(argv[++i]);
@@ -549,6 +563,7 @@ main(int argc, char *argv[])
 			Point p = { ev.xbutton.x, ev.xbutton.y };
 			int delta = (ev.xkey.state & ControlMask) ? 1 :
 			            ((ev.xkey.state & ShiftMask) ? 128 : 16);
+			// TODO: window/monitor selection
 			switch (XKeycodeToKeysym(x11.dpy, ev.xkey.keycode, 0)) {
 			case XK_space: draw(&ctx, &x11, p, EV_CLICK); break;
 			case XK_f: draw(&ctx, &x11, p, EV_SWAP); break;
@@ -568,8 +583,14 @@ main(int argc, char *argv[])
 			if (btn == Button1) {
 				draw(&ctx, &x11, p, EV_CLICK);
 			} else if (btn == Button3 && ctx.state == STATE_WAIT) {
-				ctx.state = STATE_WINDOW;
-				ctx.target = ev.xbutton.subwindow;
+				if (ev.xbutton.state & ControlMask) {
+					ctx.state = STATE_MONITOR;
+					ctx.last  = p;
+					ctx.target.monitor = MONITOR_UNDER_CURSOR;
+				} else {
+					ctx.state = STATE_WINDOW;
+					ctx.target.window = ev.xbutton.subwindow;
+				}
 			} else if ((btn == Button4 || btn == Button5) && ctx.state == STATE_DRAW) {
 				draw(&ctx, &x11, p, EV_SWAP);
 			} else {
@@ -620,7 +641,7 @@ main(int argc, char *argv[])
 	// should we skip in those cases instead?
 	if (ctx.state == STATE_WINDOW) {
 		XWindowAttributes tmp;
-		if (XGetWindowAttributes(x11.dpy, ctx.target, &tmp) == 0) {
+		if (XGetWindowAttributes(x11.dpy, ctx.target.window, &tmp) == 0) {
 			fatal(errout, S("XGetWindowAttributes() failed\n"));
 		}
 		int b = tmp.border_width;
@@ -637,10 +658,48 @@ main(int argc, char *argv[])
 		ctx.final.y = CLAMP(ctx.final.y, 0, x11.root.h);
 		ctx.final.w = MIN(ctx.final.w, x11.root.w - ctx.final.x);
 		ctx.final.h = MIN(ctx.final.h, x11.root.h - ctx.final.y);
+	} else if (ctx.state == STATE_MONITOR) {
+		int nmonitors;
+		ASSERT(features & F_ROOT);
+		XRRMonitorInfo *monitors = XRRGetMonitors(
+			x11.dpy, x11.root.win, True, &nmonitors
+		);
+		if (monitors == NULL) {
+			fatal(errout, S("XRRGetMonitors() failed\n"));
+		}
+
+		if (ctx.target.monitor == MONITOR_UNDER_CURSOR) { // clicked
+			Point *cur = &ctx.last;
+			for (Size i = 0; i < nmonitors; ++i) {
+				XRRMonitorInfo *m = monitors + i;
+				if ((cur->x >= m->x && cur->x < (m->x + m->width)) &&
+				    (cur->y >= m->y && cur->y < (m->y + m->height)))
+				{
+					ctx.target.monitor = i;
+					break;
+				}
+			}
+		}
+
+		if (ctx.target.monitor >= nmonitors) {
+			fatal(errout, S("no monitor with such index\n"));
+		} else if (ctx.target.monitor == MONITOR_UNDER_CURSOR) {
+			fatal(errout, S("couldn't find the monitor under the cursor\n"));
+		}
+
+		ASSERT(ctx.target.monitor >= 0 && ctx.target.monitor < nmonitors);
+		XRRMonitorInfo *m = monitors + ctx.target.monitor;
+		ctx.final.x = m->x;
+		ctx.final.y = m->y;
+		ctx.final.h = m->height;
+		ctx.final.w = m->width;
+#ifdef DEBUG
+		XRRFreeMonitors(monitors);
+#endif
 	}
 
 	if (ctx.state != STATE_ABORT && ctx.final.w > 0 && ctx.final.h > 0) {
-		ASSERT(ctx.state == STATE_WINDOW || ctx.state == STATE_RECT);
+		ASSERT(ctx.state == STATE_WINDOW || ctx.state == STATE_MONITOR || ctx.state == STATE_RECT);
 		u8 buf[1<<9];
 		Stream out[1] = { stream_create(1, buf, 1[&buf]) };
 		for (Size i = 0; i < out_fmt.len; NOP()) {
@@ -649,6 +708,7 @@ main(int argc, char *argv[])
 			case '%': {
 				Rect *r = &ctx.final;
 				u8 ch2 = i < out_fmt.len ? out_fmt.s[i++] : '\0';
+				// TODO??: monitor index, window id
 				switch (ch2) {
 				case 'x': stream_int(out, r->x); break;
 				case 'y': stream_int(out, r->y); break;
