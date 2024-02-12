@@ -609,6 +609,13 @@ main(int argc, char *argv[])
 		}
 	}
 
+	if (features & F_MAUS) {
+		XUngrabPointer(x11.dpy, CurrentTime);
+	}
+	if (features & F_KEYBOARD) {
+		XUngrabKeyboard(x11.dpy, CurrentTime);
+	}
+
 	// TODO: this executes even when the target window is not visible.
 	// should we skip in those cases instead?
 	if (ctx.state == STATE_WINDOW) {
@@ -669,14 +676,6 @@ main(int argc, char *argv[])
 		}
 	}
 
-#ifdef DEBUG
-	if (features & F_MAUS) {
-		XUngrabPointer(x11.dpy, CurrentTime);
-	}
-	if (features & F_KEYBOARD) {
-		XUngrabKeyboard(x11.dpy, CurrentTime);
-	}
-#endif
 	XCloseDisplay(x11.dpy);
 
 	return 0;
