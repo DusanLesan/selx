@@ -563,8 +563,17 @@ main(int argc, char *argv[])
 			Point p = { ev.xkey.x, ev.xkey.y };
 			int delta = (ev.xkey.state & ControlMask) ? 1 :
 			            ((ev.xkey.state & ShiftMask) ? 128 : 16);
-			// TODO: window/monitor selection
 			switch (XKeycodeToKeysym(x11.dpy, ev.xkey.keycode, 0)) {
+			case XK_w: {
+				if (ctx.state == STATE_WAIT && ev.xkey.state & ControlMask) {
+					ctx.state = STATE_MONITOR;
+					ctx.last  = p;
+					ctx.target.monitor = MONITOR_UNDER_CURSOR;
+				} else if (ctx.state == STATE_WAIT) {
+					ctx.state = STATE_WINDOW;
+					ctx.target.window = ev.xbutton.subwindow;
+				}
+			} break;
 			case XK_space: draw(&ctx, &x11, p, EV_CLICK); break;
 			case XK_f: draw(&ctx, &x11, p, EV_SWAP); break;
 			case XK_q: case XK_Escape: draw(&ctx, &x11, p, EV_ABORT); break;
