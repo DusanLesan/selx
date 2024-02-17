@@ -560,7 +560,7 @@ main(int argc, char *argv[])
 
 		switch (ev.type) {
 		case KeyPress: {
-			Point p = { ev.xbutton.x, ev.xbutton.y };
+			Point p = { ev.xkey.x, ev.xkey.y };
 			int delta = (ev.xkey.state & ControlMask) ? 1 :
 			            ((ev.xkey.state & ShiftMask) ? 128 : 16);
 			// TODO: window/monitor selection
