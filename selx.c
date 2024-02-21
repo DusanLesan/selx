@@ -78,7 +78,7 @@
 	#define LOG(...) ((void)0)
 #endif
 #ifndef VERSION
-	#define VERSION "v1.0.0"
+	#define VERSION "v1.1.0"
 #endif
 
 // types
