@@ -53,7 +53,8 @@ ffmpeg -f x11grab -s "${w}x${h}" -i ":0.0+$x,$y" -c:v libx264 -an \
 
 - Build Dependencies:
   * C99 compiler
-  * Necessary library headers
+  * Necessary library headers (on some distros you need to install `*-dev`
+    packages to get header files)
 
 - Runtime Dependencies:
   * X11 server
@@ -63,29 +64,23 @@ ffmpeg -f x11grab -s "${w}x${h}" -i ":0.0+$x,$y" -c:v libx264 -an \
 
 ## Building
 
-* Simple build:
+* Simple optimized build:
 
 ```console
-$ cc -o selx selx.c -s -l X11 -l Xext -l Xrandr
+$ cc -o selx selx.c -O3 -s -l X11 -l Xext -l Xrandr
 ```
 
-* Recommended optimized build:
+The above command should also work with `c99`, `gcc`, `clang` or any other C
+compiler that has a POSIX compatible cli interface.
 
-```console
-$ gcc -o selx selx.c -Ofast -march=native \
-    -fgraphite-identity -floop-nest-optimize -fipa-pta \
-    -fno-asynchronous-unwind-tables -fno-ident -fno-pie -fno-plt \
-    -s -no-pie -l X11 -l Xext -l Xrandr
-```
-
-* Recommended debug build:
+* Debug build with `gcc` (also works with `clang`):
 
 ```console
 $ gcc -o selx selx.c -std=c99 -Wall -Wextra -Wpedantic -Wshadow \
     -g3 -D DEBUG -O0 -fsanitize=address,undefined -l X11 -l Xext -l Xrandr
 ```
 
-* Optionally run some static analysis:
+* If you're editing the code, you may optionally run some static analysis:
 
 ```console
 $ make -f etc/analyze.mk
@@ -96,15 +91,15 @@ $ make -f etc/analyze.mk
 Just copy the executable and the man-page to the appropriate location:
 
 ```console
-$ sudo cp selx /usr/local/bin
-$ sudo cp selx.1 /usr/local/share/man/man1
+# cp selx /usr/local/bin
+# cp selx.1 /usr/local/share/man/man1
 ```
 
 Or using the `install` utility:
 
 ```console
-$ sudo install -Dm755 selx /usr/local/bin/selx
-$ sudo install -Dm644 selx.1 /usr/local/share/man/man1/selx.1
+# install -Dm755 selx /usr/local/bin/selx
+# install -Dm644 selx.1 /usr/local/share/man/man1/selx.1
 ```
 
 ## Limitation
