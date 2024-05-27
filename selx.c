@@ -628,7 +628,7 @@ main(int argc, char *argv[])
 			draw(&ctx, &x11, ctx.last, EV_MOTION);
 			break;
 		case DestroyNotify:
-			fatal(errout, S("recieved DestroyNotify\n"));
+			fatal(errout, S("received DestroyNotify\n"));
 			break;
 		case KeyRelease: case MapNotify:
 			NOP(); /* ignored */
@@ -717,7 +717,7 @@ main(int argc, char *argv[])
 			case '%': {
 				Rect *r = &ctx.final;
 				u8 ch2 = i < out_fmt.len ? out_fmt.s[i++] : '\0';
-				// TODO??: monitor index, window id
+				// TODO??: monitor index
 				switch (ch2) {
 				case 'x': stream_int(out, r->x); break;
 				case 'y': stream_int(out, r->y); break;
@@ -725,6 +725,7 @@ main(int argc, char *argv[])
 				case 'h': stream_int(out, r->h); break;
 				case 'W': stream_int(out, r->x + r->w); break;
 				case 'H': stream_int(out, r->y + r->h); break;
+				case 'i': stream_int(out, ctx.target.window); break;
 				case 'n': stream_append(out, S("\n")); break;
 				case '%': stream_append(out, S("%")); break;
 				default:
