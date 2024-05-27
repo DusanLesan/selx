@@ -562,7 +562,7 @@ main(int argc, char *argv[])
 		case KeyPress: {
 			Point p = { ev.xkey.x, ev.xkey.y };
 			int delta = (ev.xkey.state & ControlMask) ? 1 :
-			            ((ev.xkey.state & ShiftMask) ? 128 : 16);
+			            ((ev.xkey.state & ShiftMask) ? 10 : 1);
 			switch (XKeycodeToKeysym(x11.dpy, ev.xkey.keycode, 0)) {
 			case XK_w: {
 				if (ctx.state == STATE_WAIT && ev.xkey.state & ControlMask) {
