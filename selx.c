@@ -234,6 +234,22 @@ stream_int(Stream *out, int n)
 }
 
 static void
+stream_hex(Stream *out, u64 v)
+{
+	static const u8 map[] = {
+		'0', '1', '2', '3', '4', '5', '6', '7',
+		'8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
+	};
+
+	u8 buf[18], *p = buf;
+	*p++ = '0'; *p++ = 'x';
+	for (int r = ((v >> 32) != 0) ? 64 : 32; r > 0; r -= 4) {
+		*p++ = map[(v >> (r - 4)) & 0xF];
+	}
+	stream_append(out, (Str){ buf, p - buf });
+}
+
+static void
 fatal(Stream *out, Str errmsg)
 {
 	stream_append(out, errmsg);
@@ -416,7 +432,7 @@ main(int argc, char *argv[])
 	X11 x11;
 	DrawCtx ctx = {
 		.color_name = "#ff3838",
-		.border_width = 3,
+		.border_width = 1,
 		.errout = errout,
 	};
 	enum {
@@ -562,7 +578,7 @@ main(int argc, char *argv[])
 		case KeyPress: {
 			Point p = { ev.xkey.x, ev.xkey.y };
 			int delta = (ev.xkey.state & ControlMask) ? 1 :
-			            ((ev.xkey.state & ShiftMask) ? 10 : 1);
+			            ((ev.xkey.state & ShiftMask) ? 100 : 10);
 			switch (XKeycodeToKeysym(x11.dpy, ev.xkey.keycode, 0)) {
 			case XK_w: {
 				if (ctx.state == STATE_WAIT && ev.xkey.state & ControlMask) {
@@ -725,7 +741,11 @@ main(int argc, char *argv[])
 				case 'h': stream_int(out, r->h); break;
 				case 'W': stream_int(out, r->x + r->w); break;
 				case 'H': stream_int(out, r->y + r->h); break;
-				case 'i': stream_int(out, ctx.target.window); break;
+				case 'i': {
+					if (ctx.state == STATE_WINDOW) {
+						stream_hex(out, ctx.target.window);
+					}
+				} break;
 				case 'n': stream_append(out, S("\n")); break;
 				case '%': stream_append(out, S("%")); break;
 				default:

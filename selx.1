@@ -82,7 +82,9 @@ modifier can be used to move by 1 pixel.
 modifier can be used to move in bigger increments of 128 pixels.
 
 .SH FORMAT
-The output format can be customized via the -f flag.
+The output format can be customized via the
+.B -f
+flag.
 The format-string accepts specifiers that are expanded before outputting.
 The following specifiers are supported:
 .TP
@@ -104,11 +106,11 @@ absolute co-ordinate of the width.
 .B "%H"
 absolute co-ordinate of the height.
 .TP
+.B "%i"
+if a window was selected, then prints the window id in hex, otherwise prints nothing.
+.TP
 .B "%n"
 a new-line.
-.TP
-.B "%i"
-window id.
 .TP
 .B "%%"
 a literal percent-sign.
